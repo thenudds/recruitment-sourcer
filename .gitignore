@@ -1,0 +1,17 @@
+# Environment / secrets
+.env
+
+# Database (local only — resets on cloud)
+recruitment.db
+recruitment.db-shm
+recruitment.db-wal
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Mac
+.DS_Store
