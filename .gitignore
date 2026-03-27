@@ -1,24 +1,7 @@
-# Environment variables (contains API keys - never commit)
+recruitment.db
+recruitment.db-shm
+recruitment.db-wal
 .env
-
-# SQLite database files
-*.db
-*.db-shm
-*.db-wal
-
-# Python
 __pycache__/
-*.py[cod]
-*.pyo
-.venv/
-venv/
-env/
-
-# Mac
+*.pyc
 .DS_Store
-
-# Old/unused clients
-proxycurl_client.py
-linkdapi_client.py
-start.sh
-run.sh
