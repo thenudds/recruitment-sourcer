@@ -1,17 +1,24 @@
-# Environment / secrets
+# Environment variables (contains API keys - never commit)
 .env
 
-# Database (local only — resets on cloud)
-recruitment.db
-recruitment.db-shm
-recruitment.db-wal
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
 
 # Python
 __pycache__/
 *.py[cod]
-*.egg-info/
+*.pyo
 .venv/
 venv/
+env/
 
 # Mac
 .DS_Store
+
+# Old/unused clients
+proxycurl_client.py
+linkdapi_client.py
+start.sh
+run.sh
