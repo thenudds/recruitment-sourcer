@@ -69,6 +69,20 @@ with st.sidebar:
              "Can be narrower than the universe keyword — e.g. 'motion director'. "
              "Leave blank to use the same keyword as above.",
     )
+    location_filter = st.text_input(
+        "Location filter (optional)",
+        placeholder="e.g. United Kingdom",
+        help="Filter Step 3 candidates by location. Leave blank for worldwide results.",
+    )
+    location_field = st.selectbox(
+        "Location type",
+        options=["location_country", "location_region", "location_locality"],
+        format_func=lambda x: {
+            "location_country": "Country (e.g. United Kingdom)",
+            "location_region":  "Region (e.g. Greater London)",
+            "location_locality": "City (e.g. London)",
+        }[x],
+    )
     include_past = st.toggle(
         "Include past employees",
         value=True,
@@ -146,8 +160,8 @@ def show_results(search_id: int):
     with tab2:
         candidates = db.get_candidates(search_id)
         if candidates:
-            df = pd.DataFrame(candidates)[["name", "title", "company", "linkedin_url"]]
-            df.columns = ["Name", "Title", "Company", "LinkedIn URL"]
+            df = pd.DataFrame(candidates)[["name", "title", "company", "location", "linkedin_url"]]
+            df.columns = ["Name", "Title", "Company", "Location", "LinkedIn URL"]
             st.dataframe(
                 df,
                 use_container_width=True,
@@ -217,11 +231,13 @@ with st.expander("🔍 Debug — confirm what's being sent to PDL", expanded=Tru
 | Company slug | `{company_slug}` |
 | Universe keyword | `{keyword}` |
 | Candidate search keyword | `{candidate_keyword.strip() if candidate_keyword.strip() else keyword + ' (same as above)'}` |
+| Location filter | `{location_filter.strip() if location_filter.strip() else 'none (worldwide)'}` |
+| Location type | `{location_field}` |
 | Include past employees | `{include_past}` |
 | Max universe companies | `{max_companies}` |
 """)
 
-search_id = db.create_search(company_li_url, keyword, company_name=company_slug)
+search_id = db.create_search(company_li_url, keyword, company_name=company_slug, location=location_filter.strip())
 
 # ------------------------------------------------------------------ #
 #  Step 1: Find seed people at target company                          #
@@ -346,6 +362,8 @@ else:
                 ),
                 title_keyword=search_keyword,
                 size=25,
+                location=location_filter.strip(),
+                location_field=location_field,
             )
         except Exception:
             continue
@@ -355,12 +373,17 @@ else:
                 f"https://www.{person.get('linkedin_url', '')}"
                 if person.get("linkedin_url") else ""
             )
+            person_location = ", ".join(filter(None, [
+                person.get("location_locality", ""),
+                person.get("location_country", ""),
+            ]))
             db.save_candidate(
                 search_id=search_id,
                 name=person.get("full_name", ""),
                 linkedin_url=li_url,
                 title=person.get("job_title", ""),
                 company=company["company_name"],
+                location=person_location,
             )
             total_candidates += 1
 

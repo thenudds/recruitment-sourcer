@@ -134,17 +134,25 @@ class PDLClient:
         company_linkedin_url: str,
         title_keyword: str,
         size: int = 25,
+        location: str = "",
+        location_field: str = "location_region",
     ) -> list:
         """
         Find people currently working at a company with keyword in their title.
-        Used for Step 4 — searching the company universe for candidates.
+        Optionally filter by location (city, region, or country).
+        Used for Step 3 — searching the company universe for candidates.
         """
-        result = self.search_people(
-            company_linkedin_url=company_linkedin_url,
-            title_keyword=title_keyword,
-            size=size,
-            include_past=False,
-        )
+        must: List[dict] = [
+            {"term": {"job_company_linkedin_url": company_linkedin_url}},
+            {"wildcard": {"job_title": f"*{title_keyword.lower()}*"}},
+        ]
+        if location:
+            must.append({"term": {location_field: location.strip().lower()}})
+
+        result = self._post(
+            "/person/search",
+            {"query": {"bool": {"must": must}}, "size": size, "pretty": False},
+        ) or {"total": 0, "data": []}
         return result.get("data", [])
 
     # ------------------------------------------------------------------ #

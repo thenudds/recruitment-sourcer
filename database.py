@@ -37,6 +37,7 @@ def init_db():
             company_url TEXT    NOT NULL,
             company_name TEXT,
             keyword     TEXT    NOT NULL,
+            location    TEXT    DEFAULT '',
             created_at  TEXT    DEFAULT (datetime('now'))
         );
 
@@ -57,6 +58,7 @@ def init_db():
             linkedin_url TEXT,
             title        TEXT,
             company      TEXT,
+            location     TEXT    DEFAULT '',
             added_at     TEXT DEFAULT (datetime('now'))
         );
 
@@ -66,6 +68,15 @@ def init_db():
             cached_at    TEXT DEFAULT (datetime('now'))
         );
     """)
+    # Migrate existing databases that pre-date these columns
+    for sql in [
+        "ALTER TABLE searches ADD COLUMN location TEXT DEFAULT ''",
+        "ALTER TABLE candidates ADD COLUMN location TEXT DEFAULT ''",
+    ]:
+        try:
+            conn.execute(sql)
+        except sqlite3.OperationalError:
+            pass  # Column already exists
     conn.commit()
     conn.close()
 
@@ -74,11 +85,11 @@ def init_db():
 #  Searches                                                            #
 # ------------------------------------------------------------------ #
 
-def create_search(company_url: str, keyword: str, company_name: str = None) -> int:
+def create_search(company_url: str, keyword: str, company_name: str = None, location: str = "") -> int:
     conn = get_conn()
     cur = conn.execute(
-        "INSERT INTO searches (company_url, keyword, company_name) VALUES (?, ?, ?)",
-        (company_url, keyword, company_name)
+        "INSERT INTO searches (company_url, keyword, company_name, location) VALUES (?, ?, ?, ?)",
+        (company_url, keyword, company_name, location)
     )
     conn.commit()
     search_id = cur.lastrowid
@@ -161,7 +172,8 @@ def save_candidate(
     name: str,
     linkedin_url: str,
     title: str,
-    company: str
+    company: str,
+    location: str = "",
 ):
     conn = get_conn()
     # Avoid duplicates within same search
@@ -171,9 +183,9 @@ def save_candidate(
     ).fetchone()
     if not exists:
         conn.execute(
-            "INSERT INTO candidates (search_id, name, linkedin_url, title, company) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (search_id, name, linkedin_url, title, company)
+            "INSERT INTO candidates (search_id, name, linkedin_url, title, company, location) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (search_id, name, linkedin_url, title, company, location)
         )
         conn.commit()
     conn.close()
