@@ -287,7 +287,6 @@ with st.status(
 # ------------------------------------------------------------------ #
 st.subheader("Step 2 — Building company universe from career histories")
 
-# PDL returns experience data in the same call — no extra API calls needed!
 confirmed = 0
 skipped = 0
 
@@ -334,7 +333,6 @@ else:
 search_keyword = candidate_keyword.strip() if candidate_keyword.strip() else keyword
 st.subheader(f"Step 3 — Finding **'{search_keyword}'** candidates at top {max_companies} companies")
 
-# Only search companies that have a LinkedIn URL (needed for PDL query)
 searchable = [
     u for u in universe
     if u.get("company_linkedin_url")
@@ -369,19 +367,17 @@ else:
             continue
 
         for person in people:
-            li_url = (
-                f"https://www.{person.get('linkedin_url', '')}"
-                if person.get("linkedin_url") else ""
-            )
+            raw_url = person.get("linkedin_url") or ""
+            li_url = f"https://www.{raw_url}" if raw_url and not raw_url.startswith("http") else raw_url
             person_location = ", ".join(filter(None, [
-                person.get("location_locality", ""),
-                person.get("location_country", ""),
+                str(person.get("location_locality") or ""),
+                str(person.get("location_country") or ""),
             ]))
             db.save_candidate(
                 search_id=search_id,
-                name=person.get("full_name", ""),
+                name=person.get("full_name") or "",
                 linkedin_url=li_url,
-                title=person.get("job_title", ""),
+                title=person.get("job_title") or "",
                 company=company["company_name"],
                 location=person_location,
             )
